@@ -5,7 +5,12 @@ import { doc, setDoc, collection, query, where, getDocs } from 'firebase/firesto
 import { auth, db } from '../lib/firebase';
 import { soundFx } from '../utils/sound';
 
-import { createReferralRecordInFirebase, detectReferralCodeFromUrl } from '../lib/referrals';
+import { 
+  createReferralRecordInFirebase, 
+  detectReferralCodeFromUrl,
+  generateUniqueReferralCode,
+  saveLocalReferral 
+} from '../lib/referrals';
 
 interface AuthScreenProps {
   onSuccess: (uid?: string) => void;
@@ -42,9 +47,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onSuccess }) => {
 
   // Helper to generate unique referral code
   const generateReferralCode = (nick: string) => {
-    const cleanNick = nick.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 4);
-    const randomStr = Math.random().toString(36).substring(2, 6).toUpperCase();
-    return `${cleanNick || 'USC'}${randomStr}`;
+    return generateUniqueReferralCode(nick);
   };
 
   // Helper to format email from nickname
@@ -162,7 +165,14 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onSuccess }) => {
       localStorage.setItem('usc_local_accounts', JSON.stringify(accounts));
       localStorage.setItem('usc_user_uid', activeUid);
       localStorage.setItem(`usc_user_profile_${activeUid}`, JSON.stringify(userDocData));
+      localStorage.setItem(`uno_user_ref_code_${activeUid}`, newRefCode);
+      localStorage.removeItem('uno_pending_ref_code');
       localStorage.removeItem('usc_pending_ref_code');
+
+      // 3. Connect to local referral system
+      if (validReferralCode) {
+        saveLocalReferral(validReferralCode, activeUid, trimmedNickname);
+      }
 
       // Save user doc to Firebase `users` collection for permanent persistence
       try {
@@ -171,7 +181,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onSuccess }) => {
         console.warn('Notice saving user document to Firebase:', err);
       }
 
-      // 3. Create Firebase referral relationship record if registered via a referral code
+      // Create Firebase referral relationship record if registered via a referral code
       if (validReferralCode) {
         try {
           await createReferralRecordInFirebase(validReferralCode, activeUid, trimmedNickname);

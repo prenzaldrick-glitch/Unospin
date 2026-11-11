@@ -1,5 +1,6 @@
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from './firebase';
+import { getLocalReferrals } from './referrals';
 
 export interface WithdrawalEligibilityResult {
   isEligible: boolean;
@@ -145,6 +146,20 @@ export async function verifyWithdrawalEligibilityServer(
         snapCode.forEach((d) => referralsMap.set(d.id, d.data()));
       } catch (e) {
         console.warn('Notice checking referrals by inviterRefCode:', e);
+      }
+    }
+
+    // Include local storage referrals
+    if (refCode) {
+      try {
+        const localList = getLocalReferrals(refCode);
+        localList.forEach((r) => {
+          if (!referralsMap.has(r.id)) {
+            referralsMap.set(r.id, r);
+          }
+        });
+      } catch (e) {
+        console.warn('Notice checking local referrals in verification:', e);
       }
     }
 

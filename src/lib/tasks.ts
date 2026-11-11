@@ -8,6 +8,7 @@ import { AdTask, AdTaskTransaction, AdTaskStatus } from '../types';
  */
 
 import { triggerMonetagAd } from './monetag';
+import { updateLocalReferralTaskProgress } from './referrals';
 
 // Debounce state to prevent accidental multiple clicks
 let lastTaskTriggerTime = 0;
@@ -172,6 +173,11 @@ export async function recordCompletedAdTask(
   } catch (err) {
     console.warn('Notice updating user doc for task:', err);
   }
+
+  // Update local referral progress
+  try {
+    updateLocalReferralTaskProgress(userId, taskId);
+  } catch {}
 
   // 4. Update referral document so task activity counts toward inviter validation
   // Requires at least 15 completed tasks to become VALID

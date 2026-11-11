@@ -4,7 +4,7 @@ import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { UserState, ReferralRecord } from '../../types';
 import { soundFx } from '../../utils/sound';
-import { buildReferralLink } from '../../lib/referrals';
+import { buildReferralLink, getLocalReferrals } from '../../lib/referrals';
 import { LiveWithdrawalTracker } from '../LiveWithdrawalTracker';
 import { ADS_REQUIRED_FOR_WITHDRAWAL, VALID_REFS_REQUIRED_FOR_WITHDRAWAL, TASKS_REQUIRED_PER_REFERRAL } from '../../lib/withdrawalVerification';
 
@@ -78,6 +78,15 @@ export const InvitesModal: React.FC<InvitesModalProps> = ({
       setLoading(false);
     };
 
+    // 1. Immediately load local referrals from localStorage
+    const localList = getLocalReferrals(myRefCode);
+    if (localList.length > 0) {
+      localList.forEach((r) => recordsMap.set(r.id, r));
+      updateReferralsState();
+    } else {
+      setLoading(false);
+    }
+
     const processSnapshot = (snapshot: any) => {
       snapshot.forEach((docSnap: any) => {
         const data = docSnap.data();
@@ -132,10 +141,29 @@ export const InvitesModal: React.FC<InvitesModalProps> = ({
   const isWithdrawalUnlocked = validCount >= 8;
   const activationProgressPercent = Math.min(100, Math.round((validCount / 8) * 100));
 
+  const fallbackCopyText = (text: string) => {
+    try {
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      textArea.style.top = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      document.execCommand('copy');
+      textArea.remove();
+    } catch {}
+  };
+
   const handleCopyLink = () => {
     soundFx.playClick();
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(inviteLink);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(inviteLink).catch(() => {
+        fallbackCopyText(inviteLink);
+      });
+    } else {
+      fallbackCopyText(inviteLink);
     }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -145,8 +173,8 @@ export const InvitesModal: React.FC<InvitesModalProps> = ({
     soundFx.playClick();
     if (navigator.share) {
       navigator.share({
-        title: 'UNO SPIN LEGIT',
-        text: '🎉 Join UNO SPIN LEGIT! Complete ad tasks and withdraw real cash via GCash or Maya.',
+        title: 'UNO SPIN PHP',
+        text: '🎉 Join UNO SPIN PHP! Complete ad tasks and withdraw real cash via GCash or Maya.',
         url: inviteLink,
       }).catch(() => {
         handleCopyLink();

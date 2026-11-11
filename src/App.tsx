@@ -31,6 +31,7 @@ import {
   processReferralRewardInFirebase,
   buildReferralLink,
   detectReferralCodeFromUrl,
+  generateUniqueReferralCode,
 } from './lib/referrals';
 
 export default function App() {
@@ -95,16 +96,21 @@ export default function App() {
     if (savedProfileStr) {
       try {
         const data = JSON.parse(savedProfileStr);
+        const userRefCode = data.referralCode || localStorage.getItem(`uno_user_ref_code_${currentUid}`) || generateUniqueReferralCode(data.nickname || 'PLAYER');
+        try {
+          localStorage.setItem(`uno_user_ref_code_${currentUid}`, userRefCode);
+        } catch {}
+
         setUserState((prev) => ({
           ...prev,
           uid: currentUid,
           fullname: data.fullname || 'Player',
           nickname: data.nickname || 'Player',
-          referralCode: data.referralCode || '',
+          referralCode: userRefCode,
           referredBy: data.referredBy || null,
           inviterUid: data.inviterUid || null,
           boundWallet: data.boundWallet || null,
-          userId: data.referralCode || currentUid.slice(0, 8).toUpperCase(),
+          userId: userRefCode,
           balance: typeof data.balance === 'number' ? data.balance : prev.balance,
           spins: typeof data.spins === 'number' ? data.spins : (typeof data.spinCount === 'number' ? data.spinCount : prev.spins),
           cycleSpinCount: typeof data.cycleSpinCount === 'number' ? data.cycleSpinCount : 0,
@@ -121,12 +127,18 @@ export default function App() {
         console.warn('Error reading local profile:', err);
       }
     } else {
+      const fallbackRefCode = localStorage.getItem(`uno_user_ref_code_${currentUid}`) || generateUniqueReferralCode('PLAYER');
+      try {
+        localStorage.setItem(`uno_user_ref_code_${currentUid}`, fallbackRefCode);
+      } catch {}
+
       setUserState((prev) => ({
         ...prev,
         uid: currentUid,
         fullname: 'Player',
         nickname: 'Player',
-        userId: currentUid.slice(0, 8).toUpperCase(),
+        referralCode: fallbackRefCode,
+        userId: fallbackRefCode,
       }));
     }
 
