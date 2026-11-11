@@ -1,0 +1,6 @@
+{
+  "name": "Piso Spin Bot",
+  "description": "Mobile spin-wheel game UI with Philippine Peso rewards, spin mechanics, rankings, invites, and cash out.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

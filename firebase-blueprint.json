@@ -1,0 +1,133 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile & Referral Data",
+      "description": "User account info, spin balance, tasks completion state, ad task progress and referral connection.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "fullname": { "type": "string" },
+        "nickname": { "type": "string" },
+        "referralCode": { "type": "string" },
+        "referredBy": { "type": "string" },
+        "inviterUid": { "type": "string" },
+        "spinCount": { "type": "number" },
+        "balance": { "type": "number" },
+        "completedAdTasks": { "type": "array" },
+        "currentAdTaskLevel": { "type": "number" },
+        "totalAdRewardsEarned": { "type": "number" },
+        "telegramTaskCompleted": { "type": "boolean" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["uid", "fullname", "nickname", "referralCode", "spinCount", "balance"]
+    },
+    "Referral": {
+      "title": "Referral Record",
+      "description": "Tracks invited user status, inviter link and task completion state.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "inviterUid": { "type": "string" },
+        "invitedUid": { "type": "string" },
+        "invitedNickname": { "type": "string" },
+        "referralCode": { "type": "string" },
+        "status": { "type": "string", "enum": ["PENDING", "VALID", "NOT VALID"] },
+        "completedTasksCount": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "validatedAt": { "type": "string" }
+      },
+      "required": ["id", "inviterUid", "invitedUid", "referralCode", "status"]
+    },
+    "ReferralReward": {
+      "title": "Referral Reward Record",
+      "description": "Unique record tracking claimed +1 spin referral rewards to prevent duplicates.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "referralDocId": { "type": "string" },
+        "invitedUid": { "type": "string" },
+        "inviterRefCode": { "type": "string" },
+        "inviterUid": { "type": "string" },
+        "spinsGranted": { "type": "number" },
+        "claimed": { "type": "boolean" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "referralDocId", "spinsGranted", "claimed"]
+    },
+    "AdTaskTransaction": {
+      "title": "Task Completion & Reward Transaction",
+      "description": "Immutable log of completed rewarded tasks, rewards distributed, and verification status.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "taskId": { "type": "number" },
+        "rewardSpins": { "type": "number" },
+        "rewardCash": { "type": "number" },
+        "rewardLabel": { "type": "string" },
+        "status": { "type": "string", "enum": ["VERIFIED", "PENDING", "REJECTED"] },
+        "completedAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "taskId", "status", "completedAt"]
+    },
+    "Withdrawal": {
+      "title": "Withdrawal Record",
+      "description": "Logged cashout transactions with provider (GCash/Maya), account, status and server-audited verification.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "uid": { "type": "string" },
+        "userDisplayName": { "type": "string" },
+        "walletType": { "type": "string", "enum": ["gcash", "maya"] },
+        "accountNumber": { "type": "string" },
+        "accountName": { "type": "string" },
+        "amount": { "type": "number" },
+        "status": { "type": "string", "enum": ["Success", "Pending", "Failed"] },
+        "timestamp": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["uid", "walletType", "accountNumber", "amount", "status"]
+    },
+    "SystemSettings": {
+      "title": "Platform & Task Settings",
+      "description": "Global settings for tasks, reward rates, and admin parameters.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "taskTimerSeconds": { "type": "number" },
+        "rewardSpinsPerTask": { "type": "number" },
+        "rewardCashPerTask": { "type": "number" },
+        "isTasksEnabled": { "type": "boolean" },
+        "updatedAt": { "type": "string" },
+        "updatedBy": { "type": "string" }
+      },
+      "required": ["id"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User profile collection"
+    },
+    "/referrals/{referralId}": {
+      "schema": { "$ref": "#/entities/Referral" },
+      "description": "Referral tracking collection"
+    },
+    "/referral_rewards/{rewardId}": {
+      "schema": { "$ref": "#/entities/ReferralReward" },
+      "description": "Unique referral reward logs"
+    },
+    "/ad_task_transactions/{transactionId}": {
+      "schema": { "$ref": "#/entities/AdTaskTransaction" },
+      "description": "Task completion transactions"
+    },
+    "/withdrawals/{withdrawalId}": {
+      "schema": { "$ref": "#/entities/Withdrawal" },
+      "description": "User withdrawal transactions"
+    },
+    "/settings/{settingId}": {
+      "schema": { "$ref": "#/entities/SystemSettings" },
+      "description": "System and task configuration settings"
+    }
+  }
+}

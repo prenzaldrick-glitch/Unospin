@@ -1,0 +1,36 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Users collection: user profiles, balances, spins, completed tasks
+    match /users/{userId} {
+      allow read, write: if true;
+    }
+
+    // Referrals collection: tracking referral connections & validation status
+    match /referrals/{referralId} {
+      allow read, create, update, write: if true;
+    }
+
+    // Referral rewards collection: unique reward logs
+    match /referral_rewards/{rewardId} {
+      allow read, create, update, write: if true;
+    }
+
+    // Task Transactions: record completed spin tasks & rewards
+    match /ad_task_transactions/{transactionId} {
+      allow read, create, update, write: if true;
+    }
+
+    // Platform & App Settings
+    match /settings/{settingId} {
+      allow read, write: if true;
+    }
+
+    // Catch-all for withdrawals and leaderboard
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}
